@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SaveIcon, X, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,13 @@ import type { Note } from '@/contexts/NotesContext';
 
 interface NoteEditorProps {
   note: Note | null;
-  onSave: (data: { title: string; content: string }) => void;
+  onSave: (data: { title: string; content: string; language?: string }) => void;
   onClose: () => void;
   onExport: () => void;
   className?: string;
 }
+
+const AUTO_SAVE_INTERVAL = 5000; // 5 seconds
 
 const NoteEditor: React.FC<NoteEditorProps> = ({
   note,
@@ -26,6 +28,9 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
   const [title, setTitle] = useState(note?.title || 'Untitled Note');
   const [content, setContent] = useState(note?.content || '');
   const [isModified, setIsModified] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Update local state when note changes
   useEffect(() => {
@@ -33,8 +38,31 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
       setTitle(note.title);
       setContent(note.content);
       setIsModified(false);
+      setLastSaved(note.updatedAt ? new Date(note.updatedAt) : null);
     }
   }, [note]);
+  
+  // Set up auto-save timer
+  useEffect(() => {
+    if (isModified && note) {
+      // Clear any existing timer
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      
+      // Set new timer for auto-save
+      autoSaveTimerRef.current = setTimeout(() => {
+        handleSave();
+      }, AUTO_SAVE_INTERVAL);
+    }
+    
+    // Cleanup timer on unmount or when modified state changes
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [isModified, title, content]);
   
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
@@ -54,6 +82,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
   const handleSave = () => {
     onSave({ title, content });
     setIsModified(false);
+    setLastSaved(new Date());
   };
   
   // Auto-save on component unmount if modified
@@ -118,6 +147,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({
           className="flex-1 resize-none p-4 border-0 rounded-none focus-visible:ring-0"
         />
       </div>
+      
+      {lastSaved && (
+        <div className="text-xs text-muted-foreground px-4 py-1 border-t">
+          {isModified ? "Modified" : `Last saved: ${lastSaved.toLocaleTimeString()}`}
+        </div>
+      )}
       
       <div className="border-t p-4 flex justify-center">
         <VoiceRecorder 

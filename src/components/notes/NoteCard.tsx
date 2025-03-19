@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, MoreVertical, Download, Edit, Trash2 } from 'lucide-react';
+import { FileText, MoreVertical, Download, Edit, Trash2, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -36,6 +36,28 @@ const NoteCard: React.FC<NoteCardProps> = ({
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  // Get language name from language code
+  const getLanguageName = (code?: string) => {
+    if (!code) return null;
+    
+    // Common language codes and their names
+    const languages: Record<string, string> = {
+      'en-US': 'English (US)',
+      'en-GB': 'English (UK)',
+      'es-ES': 'Spanish',
+      'fr-FR': 'French',
+      'de-DE': 'German',
+      'it-IT': 'Italian',
+      'pt-BR': 'Portuguese',
+      'ja-JP': 'Japanese',
+      'ko-KR': 'Korean',
+      'zh-CN': 'Chinese',
+      'hi-IN': 'Hindi',
+    };
+    
+    return languages[code] || code;
   };
 
   // Truncate content for preview
@@ -100,8 +122,14 @@ const NoteCard: React.FC<NoteCardProps> = ({
         </p>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 text-xs text-muted-foreground">
-        {formatDate(note.updatedAt)}
+      <CardFooter className="p-4 pt-0 flex justify-between text-xs text-muted-foreground">
+        <span>{formatDate(note.updatedAt)}</span>
+        {note.language && note.language !== 'en-US' && (
+          <div className="flex items-center gap-1">
+            <Globe className="h-3 w-3" />
+            <span>{getLanguageName(note.language)}</span>
+          </div>
+        )}
       </CardFooter>
     </Card>
   );

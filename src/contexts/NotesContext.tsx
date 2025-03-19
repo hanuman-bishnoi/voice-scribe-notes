@@ -8,13 +8,14 @@ export interface Note {
   content: string;
   createdAt: Date;
   updatedAt: Date;
+  language?: string; // Added language field
 }
 
 interface NotesContextType {
   notes: Note[];
   activeNote: Note | null;
   setActiveNote: (note: Note | null) => void;
-  createNote: (title?: string, content?: string) => Note;
+  createNote: (title?: string, content?: string, language?: string) => Note;
   updateNote: (id: string, data: Partial<Note>) => void;
   deleteNote: (id: string) => void;
   searchNotes: (query: string) => Note[];
@@ -57,11 +58,12 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [notes, searchQuery]);
   
-  const createNote = (title = 'Untitled Note', content = '') => {
+  const createNote = (title = 'Untitled Note', content = '', language = 'en-US') => {
     const newNote: Note = {
       id: Date.now().toString(),
       title,
       content,
+      language,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -83,6 +85,11 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Also update activeNote if it's the one being edited
     if (activeNote && activeNote.id === id) {
       setActiveNote(prev => prev ? { ...prev, ...data, updatedAt: new Date() } : null);
+    }
+    
+    // Show toast only if there's a substantial update (not for auto-saves)
+    if (data.title || (data.content && data.content.length > 0 && !activeNote?.content)) {
+      toast.success('Note updated');
     }
   };
   

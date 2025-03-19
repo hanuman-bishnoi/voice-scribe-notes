@@ -33,8 +33,8 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       }
       
       // Create speech recognition instance
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
       
       // Configure recognition
       recognitionRef.current.continuous = true;
